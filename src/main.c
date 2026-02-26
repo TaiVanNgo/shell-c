@@ -27,10 +27,8 @@ int main(int argc, char *argv[])
       }
       else if (strncmp(command, "echo ", 5) == 0)
       {
-        // cut the "echo " part
-        char *user_input = strchr(command, ' ') + 1;
-
-        printf("%s\n", user_input);
+        // printf the output without the "echo " part
+        printf("%s\n", command + 5);
       }
       else
       {
