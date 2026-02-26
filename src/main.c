@@ -4,18 +4,22 @@
 
 int main(int argc, char *argv[])
 {
-  // Flush after every printf
-  setbuf(stdout, NULL);
 
-  printf("$ ");
-
-  char command[1024];
-  if (fgets(command, sizeof(command), stdin))
+  // REPL implementation
+  while (1)
   {
-    // remove the new line character from input
-    command[strlen(command) - 1] = '\0';
+    // Flush after every printf
+    setbuf(stdout, NULL);
 
-    printf("%s: command not found", command);
+    printf("$ ");
+
+    char command[1024];
+    if (fgets(command, sizeof(command), stdin))
+    {
+      // remove the new line character from input
+      command[strlen(command) - 1] = '\0';
+      printf("%s: command not found\n", command);
+    }
   }
 
   return 0;
