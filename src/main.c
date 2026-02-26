@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
     // Flush after every printf
     setbuf(stdout, NULL);
 
+    // print prefix
     printf("$ ");
 
     char command[1024];
@@ -18,7 +19,16 @@ int main(int argc, char *argv[])
     {
       // remove the new line character from input
       command[strlen(command) - 1] = '\0';
-      printf("%s: command not found\n", command);
+
+      // check exit command
+      if (strcmp(command, "exit") == 0)
+      {
+        break;
+      }
+      else
+      {
+        printf("%s: command not found\n", command);
+      }
     }
   }
 
