@@ -14,31 +14,41 @@ int main(int argc, char *argv[])
     // print prefix
     printf("$ ");
 
-    char command[1024];
-    if (fgets(command, sizeof(command), stdin))
+    char input[1024];
+    if (fgets(input, sizeof(input), stdin))
     {
       // remove the new line character from input
-      command[strlen(command) - 1] = '\0';
+      input[strlen(input) - 1] = '\0';
 
-      // check exit command
+      char *command = input;
+      char *arg = "";
+
+      // find the first space position
+      char *space_pos = strchr(input, ' ');
+      if (space_pos != NULL)
+      {
+        space_pos[0] = '\0'; // replace first space with null terminator
+        arg = space_pos + 1;
+      }
+
       if (strcmp(command, "exit") == 0)
       {
         break;
       }
-      else if (strncmp(command, "echo ", 5) == 0)
+      else if (strcmp(command, "echo") == 0)
       {
         // printf the output without the "echo " part
-        printf("%s\n", command + 5);
+        printf("%s\n", arg);
       }
-      else if (strncmp(command, "type ", 5) == 0)
+      else if (strcmp(command, "type") == 0)
       {
-        if (strcmp(command + 5, "exit") == 0 || strcmp(command + 5, "echo") == 0 || strcmp(command + 5, "type") == 0)
+        if (strcmp(arg, "exit") == 0 || strcmp(arg, "echo") == 0 || strcmp(arg, "type") == 0)
         {
-          printf("%s is a shell builtin\n", command + 5);
+          printf("%s is a shell builtin\n", arg);
         }
         else
         {
-          printf("%s: not found\n", command + 5);
+          printf("%s: not found\n", arg);
         }
       }
       else
