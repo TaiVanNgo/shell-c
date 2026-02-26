@@ -12,9 +12,8 @@ int main(int argc, char *argv[])
   char command[1024];
   if (fgets(command, sizeof(command), stdin))
   {
-    // find "\n" position
-    size_t pos = strcspn(command, "\n");
-    command[pos] = '\0'; // replace it with terminal char
+    // remove the new line character from input
+    command[strlen(command) - 1] = '\0';
 
     printf("%s: command not found", command);
   }
