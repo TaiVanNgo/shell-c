@@ -25,6 +25,13 @@ int main(int argc, char *argv[])
       {
         break;
       }
+      else if (strncmp(command, "echo ", 5) == 0)
+      {
+        // cut the "echo " part
+        char *user_input = strchr(command, ' ') + 1;
+
+        printf("%s\n", user_input);
+      }
       else
       {
         printf("%s: command not found\n", command);
