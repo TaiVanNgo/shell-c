@@ -15,7 +15,7 @@ int find_in_path(const char *command, char *result, size_t result_size)
     return 0;
 
   char path[MAX_PATH_LEN];
-  strncpy(path, path_env, sizeof(path - 1));
+  strncpy(path, path_env, sizeof(path) - 1);
 
   char *dir = strtok(path, ":"); // separate `path` into token by ":"
   while (dir != NULL)
@@ -104,10 +104,12 @@ int parse_input(char *input, char *args[])
   while (token != NULL && cnt < MAX_ARGS_CNT - 1)
   {
     args[cnt++] = token;
-    strtok(NULL, " ");
+    token = strtok(NULL, " ");
   }
 
   args[cnt] = NULL; // NULL-terminate the array
+
+  return cnt;
 }
 
 int main(int argc, char *argv[])
