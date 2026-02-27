@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
+  char *DIR = getenv("PATH");
 
   // REPL implementation
   while (1)
@@ -48,7 +50,33 @@ int main(int argc, char *argv[])
         }
         else
         {
-          printf("%s: not found\n", arg);
+          if (DIR != NULL)
+          {
+            char path[4096];
+            strncpy(path, DIR, sizeof(path) - 1);
+
+            char *dir = strtok(path, ":");
+            int found = 0;
+
+            while (dir != NULL)
+            {
+              char full_path[1024];
+              // format the `full_path` into "dir/arg"
+              snprintf(full_path, sizeof(full_path), "%s/%s", dir, arg);
+
+              if (access(full_path, X_OK) == 0)
+              {
+                printf("%s is %s\n", arg, full_path);
+                found = 1;
+                break;
+              }
+              dir = strtok(NULL, ":");
+            }
+            if (!found)
+            {
+              printf("%s: not found\n", arg);
+            }
+          }
         }
       }
       else
