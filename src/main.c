@@ -22,16 +22,22 @@ int main(int argc, char *argv[])
       // remove the new line character from input
       input[strlen(input) - 1] = '\0';
 
-      char *command = input;
-      char *arg = "";
-
-      // find the first space position
-      char *space_pos = strchr(input, ' ');
-      if (space_pos != NULL)
+      // Parse input into arguments
+      char *args[64];  // max 64 arguments
+      int arg_count = 0;
+      
+      char *token = strtok(input, " ");
+      while (token != NULL && arg_count < 63)
       {
-        space_pos[0] = '\0'; // replace first space with null terminator
-        arg = space_pos + 1;
+        args[arg_count++] = token;
+        token = strtok(NULL, " ");
       }
+      args[arg_count] = NULL;  // NULL-terminate the array
+      
+      if (arg_count == 0) continue;  // empty input
+      
+      char *command = args[0];
+      char *arg = (arg_count > 1) ? args[1] : "";
 
       if (strcmp(command, "exit") == 0)
       {
@@ -95,11 +101,26 @@ int main(int argc, char *argv[])
 
           if (access(full_path, X_OK) == 0)
           {
-            char external_command[1024];
-            snprintf(external_command, sizeof(external_command), "%s %s", full_path, arg);
-
-            system(external_command);
-            found = 1;
+            pid_t pid = fork();
+            if (pid == 0)
+            {
+              // Child process - use the full_path we found
+              execv(full_path, args);
+              // If execv fails
+              perror("execv failed");
+              exit(1);
+            }
+            else if (pid > 0)
+            {
+              // Parent process - wait for child
+              wait(NULL);
+              found = 1;
+              break;  // Don't continue searching once executed
+            }
+            else
+            {
+              perror("fork failed");
+            }
           }
           dir = strtok(NULL, ":");
         }
