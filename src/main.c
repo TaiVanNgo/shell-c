@@ -81,7 +81,32 @@ int main(int argc, char *argv[])
       }
       else
       {
-        printf("%s: command not found\n", command);
+        char path[4096];
+        strncpy(path, DIR, sizeof(path) - 1);
+
+        char *dir = strtok(path, ":");
+        int found = 0;
+
+        while (dir != NULL)
+        {
+          char full_path[1024];
+          // format the `full_path` into "dir/arg"
+          snprintf(full_path, sizeof(full_path), "%s/%s", dir, command);
+
+          if (access(full_path, X_OK) == 0)
+          {
+            char external_command[1024];
+            snprintf(external_command, sizeof(external_command), "%s %s", full_path, arg);
+
+            system(external_command);
+            found = 1;
+          }
+          dir = strtok(NULL, ":");
+        }
+        if (!found)
+        {
+          printf("%s: command not found\n", command);
+        }
       }
     }
   }
