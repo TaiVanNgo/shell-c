@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 int main(int argc, char *argv[])
 {
@@ -23,19 +24,20 @@ int main(int argc, char *argv[])
       input[strlen(input) - 1] = '\0';
 
       // Parse input into arguments
-      char *args[64];  // max 64 arguments
+      char *args[64]; // max 64 arguments
       int arg_count = 0;
-      
+
       char *token = strtok(input, " ");
       while (token != NULL && arg_count < 63)
       {
         args[arg_count++] = token;
         token = strtok(NULL, " ");
       }
-      args[arg_count] = NULL;  // NULL-terminate the array
-      
-      if (arg_count == 0) continue;  // empty input
-      
+      args[arg_count] = NULL; // NULL-terminate the array
+
+      if (arg_count == 0)
+        continue; // empty input
+
       char *command = args[0];
       char *arg = (arg_count > 1) ? args[1] : "";
 
@@ -46,7 +48,13 @@ int main(int argc, char *argv[])
       else if (strcmp(command, "echo") == 0)
       {
         // printf the output without the "echo " part
-        printf("%s\n", arg);
+        for (int i = 1; i < arg_count; i++)
+        {
+          if (i > 1)
+            printf(" ");
+          printf("%s", args[i]);
+        }
+        printf("\n");
       }
       else if (strcmp(command, "type") == 0)
       {
@@ -115,7 +123,7 @@ int main(int argc, char *argv[])
               // Parent process - wait for child
               wait(NULL);
               found = 1;
-              break;  // Don't continue searching once executed
+              break; // Don't continue searching once executed
             }
             else
             {
