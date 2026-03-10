@@ -1,8 +1,10 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
+#include <string.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #define MAX_PATH_LEN 4096
 #define MAX_ARGS_CNT 64 // the command can holds up to 64 arguments
@@ -32,11 +34,33 @@ int find_in_path(const char *command, char *result, size_t result_size)
   return 0;
 }
 
+int extract_redirection(char *args[], int *arg_count, char **out_file)
+{
+  int cnt = *arg_count;
+  for (int i = 1; i < cnt; i++)
+  {
+    if (strcmp(args[i], ">") == 0 || strcasecmp(args[i], "1>") == 0)
+    {
+      if (i + 1 >= cnt)
+        return -1; // Error: Missing file name
+
+      *out_file = args[i + 1];
+
+      for (int j = i; j + 2 <= cnt; j++)
+        args[j] = args[j + 2];
+
+      *arg_count -= 2; // remove ">" and args filename
+      args[*arg_count] = NULL;
+      return 1;
+    }
+  }
+  return 0;
+}
+
 // Check if command is a builtin
 int is_builtin(const char *command)
 {
-  return strcmp(command, "exit") == 0 ||
-         strcmp(command, "echo") == 0 ||
+  return strcmp(command, "exit") == 0 || strcmp(command, "echo") == 0 ||
          strcmp(command, "type") == 0;
 }
 
@@ -45,10 +69,9 @@ void cmd_echo(char *args[], int arg_count)
 {
   for (int i = 1; i < arg_count; i++)
   {
-    if (i > 1)
-      printf(" ");
-
     printf("%s", args[i]);
+    if (arg_count > 1)
+      printf(" ");
   }
 
   printf("\n");
@@ -70,7 +93,7 @@ void cmd_type(const char *arg)
   }
 }
 
-void execute_command(char **args)
+void execute_command(char **args, const char *out_file)
 {
   char *command = args[0]; // get the command name
 
@@ -84,6 +107,14 @@ void execute_command(char **args)
   pid_t pid = fork();
   if (pid == 0)
   {
+
+    if (out_file != NULL)
+    {
+      int fd = open(out_file, O_WRONLY | O_TRUNC, 0644);
+      dup2(fd, STDOUT_FILENO);
+      close(fd);
+    }
+
     // the execv get the path and args with the first arg is file name
     execv(full_path, args);
     perror("execv failed");
@@ -141,6 +172,29 @@ int main(int argc, char *argv[])
     char *command = args[0];
     char *arg = (arg_count > 1) ? args[1] : "";
 
+    char *out_file = NULL;
+    int redir = extract_redirection(args, &arg_count, &out_file); // extract if have the ">" symbol
+    if (redir == -1)
+    {
+      fprintf(stderr, "syntax error: expected filename after >\n");
+      continue;
+    }
+
+    int saved_stdout = -1;
+    if (out_file != NULL) // if detect the redirection
+    {
+      saved_stdout = dup(STDOUT_FILENO);
+
+      /**
+       * O_WRONLY: Open for writing only.
+       * O_TRUNC: If the file already exists, wipe it clean (truncate it) before writing.
+       * 0644: Sets permissions so the owner can read/write, and others can only read
+       */
+      int fd = open(out_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+      dup2(fd, STDOUT_FILENO);
+      close(fd);
+    }
+
     if (strcmp(command, "exit") == 0)
       break;
     else if (strcmp(command, "echo") == 0)
@@ -148,7 +202,7 @@ int main(int argc, char *argv[])
     else if (strcmp(command, "type") == 0)
       cmd_type(arg);
     else
-      execute_command(args);
+      execute_command(args, out_file);
   }
 
   return 0;
