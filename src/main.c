@@ -69,9 +69,9 @@ void cmd_echo(char *args[], int arg_count)
 {
   for (int i = 1; i < arg_count; i++)
   {
-    printf("%s", args[i]);
-    if (arg_count > 1)
+    if (i > 1)
       printf(" ");
+    printf("%s", args[i]);
   }
 
   printf("\n");
@@ -203,6 +203,13 @@ int main(int argc, char *argv[])
       cmd_type(arg);
     else
       execute_command(args, out_file);
+
+    if (out_file != NULL)
+    {
+      fflush(stdout);
+      dup2(saved_stdout, STDOUT_FILENO);
+      close(saved_stdout);
+    }
   }
 
   return 0;
